@@ -1,6 +1,25 @@
 import cv2
 import numpy as np
 
+
+def apply_DCT(block):
+    DCT_block = np.empty_like(block, dtype=np.float32)
+    N = len(block)
+
+    # applying DCT for a block
+    for u in range(N):
+        for v in range(N):
+            DCT_val = 0.0
+            for x in range(N):
+                for y in range(N):
+                    DCT_val += block[x][y] * \
+                        np.cos((2*x+1)*u*np.pi/(2*N)) * \
+                        np.cos((2*y+1)*v*np.pi/(2*N))
+            DCT_block[u][v] = DCT_val
+
+    return DCT_block
+
+
 # Read the image
 path = "./image.jpg"
 image = cv2.imread(path)
@@ -13,10 +32,12 @@ num_blocks_x = (width + block_size - 1) // block_size
 num_blocks_y = (height + block_size - 1) // block_size
 
 # Zero-padded canvas to hold the blocks
-canvas = np.zeros((num_blocks_y * block_size, num_blocks_x * block_size, 3), dtype=np.uint8)
+canvas = np.zeros((num_blocks_y * block_size, num_blocks_x *
+                  block_size, 3), dtype=np.uint8)
 
 # 3D NumPy array to store the blocks
-blocks_matrix = np.zeros((num_blocks_y, num_blocks_x, block_size, block_size, 3), dtype=np.uint8)
+blocks_matrix = np.zeros(
+    (num_blocks_y, num_blocks_x, block_size, block_size, 3), dtype=np.uint8)
 
 # Copy the image onto the canvas
 canvas[:height, :width] = image
@@ -34,12 +55,14 @@ for y in range(0, canvas.shape[0], block_size):
         # Store the block in the 3D array
         blocks_matrix[block_y, block_x] = block
 
-print(blocks_matrix[0,0])
-print(canvas.shape[:2])
-print(blocks_matrix.shape[:2])
+
+for y in range(blocks_matrix.shape[0]):
+    for x in range(blocks_matrix.shape[1]):
+        blocks_matrix[y, x] = apply_DCT(blocks_matrix[y, x])
+
 
 
 # Display the original image
-cv2.imwrite('block.jpg',blocks_matrix[0,50])
+cv2.imwrite('block.jpg', blocks_matrix[0, 50])
 cv2.imshow('Original', image)
 cv2.waitKey(0)
