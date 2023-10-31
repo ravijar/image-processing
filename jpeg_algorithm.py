@@ -20,6 +20,20 @@ def apply_DCT(block):
     return DCT_block
 
 
+def quantize(block,quantization_table):
+    quantized_block = np.round(block/quantization_table)
+    return quantized_block
+
+quantization_table_Y = np.array(
+        [[16, 11, 10, 16, 24, 40, 51, 61],
+         [12, 12, 14, 19, 26, 58, 60, 55],
+         [14, 13, 16, 24, 40, 57, 69, 56],
+         [14, 17, 22, 29, 51, 87, 80, 62],
+         [18, 22, 37, 56, 68, 109, 103, 77],
+         [24, 35, 55, 64, 81, 104, 113, 92],
+         [49, 64, 78, 87, 103, 121, 120, 101],
+         [72, 92, 95, 98, 112, 100, 103, 99]], dtype=np.float32)
+
 # Read the image
 path = "./image.jpg"
 image = cv2.imread(path)
@@ -28,7 +42,7 @@ image = cv2.imread(path)
 image = cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)
 
 # Extract only the Y channel for convinience
-image = image[:,:,0]
+image = image[:, :, 0]
 
 height, width = image.shape[:2]
 block_size = 8
@@ -65,8 +79,7 @@ for y in range(0, canvas.shape[0], block_size):
 for y in range(blocks_matrix.shape[0]):
     for x in range(blocks_matrix.shape[1]):
         blocks_matrix[y, x] = apply_DCT(blocks_matrix[y, x])
-
-
+        blocks_matrix[y,x] = quantize(blocks_matrix[y,x],quantization_table_Y)
 
 # Display the original image
 cv2.imwrite('block.jpg', blocks_matrix[0, 50])
