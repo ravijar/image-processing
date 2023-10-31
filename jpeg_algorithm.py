@@ -24,6 +24,12 @@ def apply_DCT(block):
 path = "./image.jpg"
 image = cv2.imread(path)
 
+# Convert the image to YCrCb
+image = cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)
+
+# Extract only the Y channel for convinience
+image = image[:,:,0]
+
 height, width = image.shape[:2]
 block_size = 8
 
@@ -33,11 +39,11 @@ num_blocks_y = (height + block_size - 1) // block_size
 
 # Zero-padded canvas to hold the blocks
 canvas = np.zeros((num_blocks_y * block_size, num_blocks_x *
-                  block_size, 3), dtype=np.uint8)
+                  block_size), dtype=np.uint8)
 
 # 3D NumPy array to store the blocks
 blocks_matrix = np.zeros(
-    (num_blocks_y, num_blocks_x, block_size, block_size, 3), dtype=np.uint8)
+    (num_blocks_y, num_blocks_x, block_size, block_size), dtype=np.uint8)
 
 # Copy the image onto the canvas
 canvas[:height, :width] = image
