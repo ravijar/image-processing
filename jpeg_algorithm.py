@@ -3,21 +3,27 @@ import numpy as np
 
 
 def apply_DCT(block):
-    DCT_block = np.empty_like(block, dtype=np.float32)
+    output_block = np.empty_like(block)
     N = len(block)
 
-    # applying DCT for a block
     for u in range(N):
         for v in range(N):
-            DCT_val = 0.0
+            sum = 0.0
             for x in range(N):
                 for y in range(N):
-                    DCT_val += block[x][y] * \
-                        np.cos((2*x+1)*u*np.pi/(2*N)) * \
-                        np.cos((2*y+1)*v*np.pi/(2*N))
-            DCT_block[u][v] = DCT_val
+                    sum+=block[x][y]*np.cos(((2*x+1)*u*np.pi)/(2*N))*np.cos(((2*y+1)*v*np.pi)/(2*N))
+            if u == 0:
+                cu = 1/np.sqrt(2)
+            else:
+                cu = 1
+            if v == 0:
+                cv = 1/np.sqrt(2)
+            else:
+                cv = 1
 
-    return DCT_block
+            output_block[u][v] = round(0.25*cu*cv*sum,1)
+    
+    return output_block
 
 
 def quantize(block,quantization_table):
