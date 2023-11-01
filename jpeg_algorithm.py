@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+import json
+import pickle
 
 
 def centralize(block, value):
@@ -32,6 +34,53 @@ def apply_DCT(block):
 def quantize(block, quantization_table):
     quantized_block = np.round(block/quantization_table).astype(np.int32)
     return quantized_block
+
+
+def zigzag_scan(block):
+    rows, cols = len(block), len(block[0])
+    result = []
+
+    for i in range(rows + cols - 1):
+        if i % 2 == 0:  # Even diagonal (up-right)
+            if i < rows:
+                row, col = i, 0
+            else:
+                row, col = rows - 1, i - rows + 1
+            while row >= 0 and col < cols:
+                result.append(block[row][col])
+                row -= 1
+                col += 1
+        else:  # Odd diagonal (down-left)
+            if i < cols:
+                row, col = 0, i
+            else:
+                row, col = i - cols + 1, cols - 1
+            while row < rows and col >= 0:
+                result.append(block[row][col])
+                row += 1
+                col -= 1
+
+    return result
+
+
+def run_length_encode(arr):
+    if not arr:
+        return []
+
+    encoded_array = []
+    current_element = arr[0]
+    count = 1
+
+    for element in arr[1:]:
+        if element == current_element:
+            count += 1
+        else:
+            encoded_array.append((int(current_element), count))
+            current_element = element
+            count = 1
+
+    encoded_array.append((int(current_element), count))
+    return encoded_array
 
 
 quantization_table_Y = np.array(
@@ -85,6 +134,7 @@ for y in range(0, canvas.shape[0], block_size):
         # Store the block in the 3D array
         blocks_matrix[block_y, block_x] = block
 
+encoded_data = [[] for _ in range(num_blocks_y)]
 
 for y in range(blocks_matrix.shape[0]):
     for x in range(blocks_matrix.shape[1]):
@@ -92,9 +142,10 @@ for y in range(blocks_matrix.shape[0]):
         blocks_matrix[y, x] = apply_DCT(blocks_matrix[y, x])
         blocks_matrix[y, x] = quantize(
             blocks_matrix[y, x], quantization_table_Y)
+        encoded_data[y].append(
+            run_length_encode(zigzag_scan(blocks_matrix[y, x])))
 
-print(blocks_matrix[10, 10])
+
 # Display the original image
-cv2.imwrite('block.jpg', blocks_matrix[0, 50])
 cv2.imshow('Original', image)
 cv2.waitKey(0)
