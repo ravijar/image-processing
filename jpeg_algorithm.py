@@ -1,6 +1,9 @@
 import cv2
 import numpy as np
 
+def centralize(block,value):
+    centralized_block = block.astype(np.float32) -value
+    return centralized_block
 
 def apply_DCT(block):
     output_block = np.empty_like(block)
